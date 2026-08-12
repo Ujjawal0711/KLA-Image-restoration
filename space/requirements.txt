@@ -1,0 +1,7 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch
+gradio
+numpy
+opencv-python-headless
+scikit-image
+matplotlib
