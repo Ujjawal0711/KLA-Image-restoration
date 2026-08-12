@@ -5,7 +5,7 @@ reviews changes to it, and is the person to ask about it.
 
 | Part | Area | Owner |
 |---|---|---|
-| 1 | Data & degradation modelling | **Shubhanker Ohri** |
+| 1 | Data & degradation modelling | **Shubhankar Ohri** |
 | 2 | Model, training & experiments | **Ujjawal Chaudhary** |
 | 3 | Inference, packaging & demo | **Rashiv Saran** |
 
@@ -16,7 +16,7 @@ output files.
 
 ---
 
-## Part 1 — Data & degradation modelling  ·  Shubhanker Ohri
+## Part 1 — Data & degradation modelling  ·  Shubhankar Ohri
 
 **The question this part answers:** no paired training data was ever released, so where
 does training data come from, and how exactly did the organisers damage their images?

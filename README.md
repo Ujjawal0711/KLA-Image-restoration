@@ -32,7 +32,7 @@ The project divides into three self-contained areas, each with an owner — see
 
 | Part | Area | Owner |
 |---|---|---|
-| 1 | Data & degradation modelling | **Shubhanker Ohri** |
+| 1 | Data & degradation modelling | **Shubhankar Ohri** |
 | 2 | Model, training & experiments | **Ujjawal Chaudhary** |
 | 3 | Inference, packaging & demo | **Rashiv Saran** |
 
@@ -214,3 +214,18 @@ scripts/
   analyze_degradation.py     degradation estimators (unused — no data released)
   inspect_data.py            dataset inspection (unused — no data released)
 ```
+
+---
+
+## Team
+
+Built for the **KLA problem statement**, i4C / SEMICON India Hackathon 2026.
+
+| | |
+|---|---|
+| **Ujjawal Chaudhary** | Model, training & experiments |
+| **Shubhankar Ohri** | Data & degradation modelling |
+| **Rashiv Saran** | Inference, packaging & demo |
+
+See [`OWNERSHIP.md`](OWNERSHIP.md) for what each area covers and the reasoning behind
+the decisions in it.
