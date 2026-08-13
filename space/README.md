@@ -1,39 +1,37 @@
 ---
-title: Degraded Image Restoration — KLA / i4C 2026
+title: Restoring Degraded Semiconductor Imagery
 emoji: 🔬
 colorFrom: blue
 colorTo: indigo
-sdk: gradio
-app_file: app.py
+sdk: docker
+app_port: 7860
 pinned: false
 license: mit
-short_description: Joint 2x super-resolution and speckle denoising for semiconductor inspection imagery
+short_description: Live 2x super-resolution and speckle denoising for wafer inspection imagery
 ---
 
 # Restoring degraded semiconductor imagery
 
-Interactive demo for the **KLA problem statement**, i4C / SEMICON India Hackathon 2026.
+Live demo for the **KLA problem statement**, i4C / SEMICON India Hackathon 2026.
 
-A degraded inspection image arrives at **half resolution** and covered in
-**multiplicative speckle**. The task is to undo both at once — denoise *and* double the
-resolution — and to do it quickly, because end-to-end inference time is half the
-competition score.
+A degraded inspection image arrives at **half resolution** covered in **multiplicative
+speckle**. The task is to undo both at once — denoise *and* double the resolution.
 
-**No training data was released for this problem.** The entire training set is
-synthetic: 13,358 ground-truth images across electron microscopy, materials
-micrographs, textures, brightfield microscopy and procedurally generated wafer
-structures, each damaged freshly on every use.
+**Every restore here is a real forward pass.** Nothing is pre-computed, and the page
+reports how long the network took.
 
-## What you can do here
+## Try it
 
-- **Try it** — drag the damage controls and watch speckle scale with brightness, then
-  restore. Corruption is pure NumPy and updates instantly; restoration runs a 34M
-  parameter network in about 0.7 s on this Space's CPU.
-- **Why it spills past white** — the histogram showing degraded pixels exceeding the
-  ground-truth range, which is what makes this noise unusual.
-- **Does it hold up?** — quality across noise levels far outside what the model trained
-  on, plus results on microscopy types it has never seen.
-- **How it was built** — including the five improvement ideas that measured *worse*.
+- Pick a sample (all held out from training) or upload your own image
+- Drag **L** — speckle strength. Lower is noisier. The damage updates instantly, because
+  corrupting an image is pure NumPy
+- Press **Restore** — the 34.4M-parameter network runs on CPU, about 0.7 s for a
+  128×128 input
+- Watch the overflow readout: at L = 4 roughly a third of pixels exceed 1.0, because
+  the noise multiplies rather than adds
+
+Good place to start: **Brightfield (unseen corpus)** at **L = 4**. Bicubic scores 0.05
+SSIM there; the model scores 0.70 — on a corpus it never trained on.
 
 ## Results
 
@@ -45,14 +43,10 @@ Measured on 300 held-out images against the strongest non-learned baseline:
 | SSIM | 0.5110 | **0.6994** | **+0.1884 (37%)** |
 | LPIPS | 0.4341 | **0.1711** | **−0.2630** |
 
-Against plain bicubic upscaling: **+5.8 dB, +48% SSIM**, perceptual error cut to about
-a third.
+Against plain bicubic: **+5.8 dB, +48% SSIM**.
 
-## Model
+**No training data was released for this problem.** The entire training set is
+synthetic, built from a degradation model reverse-engineered out of parameters embedded
+in the problem statement's own sample figures.
 
-NAFNet, 34.4M parameters. All computation happens at low resolution with a single
-`PixelShuffle` upscale at the end — 4× cheaper than upscaling first. Fully
-convolutional, so the same weights serve both competition regimes (128→256 and
-256→512) despite only ever training on the smaller one.
-
-Trained on an 8 GB laptop GPU under mixed precision with EMA weight averaging.
+Code and full write-up: https://github.com/ujjawal0711/KLA-Image-restoration

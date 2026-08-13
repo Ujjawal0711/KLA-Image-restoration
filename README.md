@@ -93,13 +93,21 @@ buys.
 
 ## Interactive demo
 
-[`space/`](space/) is a Gradio app: drag the damage controls and watch speckle scale
-with brightness, then restore. Corruption is pure NumPy and updates instantly;
-restoration runs the 34M-parameter network in ~0.7 s on CPU.
+Pick a sample or upload your own, drag the damage controls and watch speckle scale with
+brightness, then restore. **Every restore is a real forward pass** — nothing is
+pre-computed, and the page reports how long the network took. Corruption is pure NumPy
+and returns in milliseconds; restoration runs the 34.4M-parameter model in ~0.7 s for a
+128×128 input on CPU. That contrast is the point: the damage is trivial to apply and
+hard to undo.
+
+Run it locally:
 
 ```bash
-cd space && python app.py
+python demo_app.py          # then open http://localhost:7860
 ```
+
+[`space/`](space/) is the same server packaged for Hugging Face as a Docker Space —
+`app.py` there is a copy of `demo_app.py`, so what is deployed is what was tested.
 
 ## Reproducing from scratch
 
@@ -185,7 +193,7 @@ does not support it, and the original claim was overstated.
 evaluate.py                  the deliverable — inference pipeline
 NOTES.md                     every empirical finding and measurement
 Project-Report.pdf           32-page written report
-space/                       interactive Gradio demo
+space/                       the demo, packaged as a Docker Space
 src/
   degradation.py             forward degradation model
   dataset.py                 on-the-fly synthetic pair generation

@@ -131,7 +131,7 @@ scripts/check_submission.py     self-containment audit
 scripts/package_submission.py   assemble the package, test it in isolation
 scripts/dress_rehearsal.py      full end-to-end run under grading conditions
 scripts/finalize.py             one command for everything post-training
-space/                          interactive Gradio demo
+space/                          the demo, packaged for Hugging Face
 ```
 
 ### What the work involved

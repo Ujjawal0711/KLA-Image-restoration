@@ -53,8 +53,20 @@ def load_model(weights: pathlib.Path):
     N_PARAMS = sum(p.numel() for p in MODEL.parameters())
 
 
+def samples_dir() -> pathlib.Path:
+    """Works from the repo root and from inside a deployed copy, where the samples sit
+    beside the script rather than under space/."""
+    for cand in (ROOT / "samples", ROOT / "space" / "samples"):
+        if (cand / "index.txt").exists():
+            return cand
+    return ROOT / "samples"
+
+
+SAMPLES_DIR = samples_dir()
+
+
 def load_samples():
-    idx = ROOT / "space" / "samples" / "index.txt"
+    idx = SAMPLES_DIR / "index.txt"
     if not idx.exists():
         return
     for line in idx.read_text(encoding="utf-8").splitlines():
@@ -82,7 +94,7 @@ def read_gt(sample: str | None, upload_b64: str | None) -> np.ndarray:
         h, w = a.shape[:2]
         return np.clip(a[:h - h % 2, :w - w % 2], 0, 1)
     fn = SAMPLES.get(sample or "") or next(iter(SAMPLES.values()))
-    a = cv2.imread(str(ROOT / "space" / "samples" / fn), cv2.IMREAD_GRAYSCALE)
+    a = cv2.imread(str(SAMPLES_DIR / fn), cv2.IMREAD_GRAYSCALE)
     return a.astype(np.float32) / 255.0
 
 
@@ -206,7 +218,7 @@ th:first-child,td:first-child{text-align:left}th{color:var(--dim);font-weight:50
 @media(max-width:900px){.cols{grid-template-columns:1fr}}
 </style></head><body><div class="wrap">
 <h1>Restoring degraded semiconductor imagery</h1>
-<div class="sub">KLA problem statement · i4C / SEMICON India Hackathon 2026 ·
+<div class="sub">KLA problem statement ·
 <span id="arch"></span> · <b>live inference — nothing pre-computed</b></div>
 
 <div class="cols">
@@ -312,6 +324,8 @@ def main() -> int:
     ap.add_argument("--weights", type=pathlib.Path,
                     default=ROOT / "checkpoints" / "model.pt")
     ap.add_argument("--port", type=int, default=7860)
+    ap.add_argument("--host", default="127.0.0.1",
+                    help="0.0.0.0 inside a container, so the platform can reach it")
     ap.add_argument("--threads", type=int, default=4)
     ap.add_argument("--no-browser", action="store_true")
     args = ap.parse_args()
@@ -328,7 +342,7 @@ def main() -> int:
     print(f"  {len(SAMPLES)} sample images")
 
     url = f"http://localhost:{args.port}"
-    srv = ThreadingHTTPServer(("127.0.0.1", args.port), Handler)
+    srv = ThreadingHTTPServer((args.host, args.port), Handler)
     print(f"\n  demo running at  {url}\n  Ctrl+C to stop\n")
     if not args.no_browser:
         threading.Timer(0.8, lambda: webbrowser.open(url)).start()
