@@ -28,6 +28,20 @@ from src.models import build_from_arch
 HERE = pathlib.Path(__file__).resolve().parent
 torch.set_num_threads(2)          # free Spaces give 2 vCPU
 
+# Free Gradio Spaces run on ZeroGPU, where a GPU is attached only for the duration of a
+# function marked with @spaces.GPU. Two rules follow: CUDA must not be touched at import
+# time (the model is therefore loaded on CPU below), and the forward pass must live
+# inside the decorated function.
+#
+# The package does not exist off-platform, so the decorator degrades to a no-op and the
+# same code runs on plain CPU locally — which is how core.py stays testable here.
+try:                                  # pragma: no cover - platform dependent
+    import spaces
+    on_gpu = spaces.GPU(duration=60)
+except Exception:                     # noqa: BLE001
+    def on_gpu(fn):
+        return fn
+
 _ck = torch.load(HERE / "model.pt", map_location="cpu", weights_only=False)
 MODEL = build_from_arch(_ck["arch"])
 MODEL.load_state_dict({k: v.float() for k, v in _ck["model"].items()})
@@ -111,15 +125,29 @@ def make_degraded(sample_label, uploaded, L, sigma, kernel, seed):
     return to_disp(gt), to_disp(lr), hist_figure(gt, lr), info, (gt, lr)
 
 
+@on_gpu
+def forward(lr: np.ndarray) -> tuple[np.ndarray, str]:
+    """The only function that touches the accelerator.
+
+    Device selection happens here rather than at import so ZeroGPU can attach a GPU for
+    the call and reclaim it afterwards; off-platform this simply resolves to CPU.
+    """
+    dev = "cuda" if torch.cuda.is_available() else "cpu"
+    model = MODEL.to(dev)
+    x = torch.from_numpy(np.ascontiguousarray(lr[None, None],
+                                              dtype=np.float32)).to(dev)
+    with torch.inference_mode():
+        out = model(x).clamp_(0, 1).float().cpu().numpy()[0, 0]
+    return out, dev
+
+
 def restore(state):
     """-> (bicubic_display, model_display, metrics_markdown)"""
     if state is None:
         return None, None, "Move a slider first."
     gt, lr = state
-    x = torch.from_numpy(np.ascontiguousarray(lr[None, None], dtype=np.float32))
     t0 = time.perf_counter()
-    with torch.inference_mode():
-        pred = MODEL(x).clamp_(0, 1).numpy()[0, 0]
+    pred, dev = forward(lr)
     dt = time.perf_counter() - t0
 
     bic = np.clip(cv2.resize(lr, (gt.shape[1], gt.shape[0]),
@@ -135,7 +163,7 @@ def restore(state):
         f"| | bicubic | **model** | gain |\n|---|---|---|---|\n"
         f"| pSNR | {bp:.2f} | **{mp:.2f}** | **{mp - bp:+.2f} dB** |\n"
         f"| SSIM | {bs:.4f} | **{ms:.4f}** | **{ms - bs:+.4f}** |\n\n"
-        f"Restored in **{dt:.2f}s** on 2 CPU threads.\n\n"
+        f"Restored in **{dt:.2f}s** on {dev.upper()}.\n\n"
         f"*LPIPS is not computed live (it needs a 230 MB network). Measured on 300 "
         f"held-out images: bicubic {BENCH['b_lpips']:.4f} → model "
         f"**{BENCH['lpips']:.4f}**.*"
