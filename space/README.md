@@ -3,8 +3,8 @@ title: Restoring Degraded Semiconductor Imagery
 emoji: 🔬
 colorFrom: blue
 colorTo: indigo
-sdk: docker
-app_port: 7860
+sdk: gradio
+app_file: app.py
 pinned: false
 license: mit
 short_description: Live 2x super-resolution and speckle denoising for wafer inspection imagery
