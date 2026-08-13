@@ -1,4 +1,4 @@
-﻿"""Interactive demo: AI-based restoration of degraded semiconductor imagery.
+"""Interactive demo: AI-based restoration of degraded semiconductor imagery.
 
 KLA problem statement, i4C / SEMICON India Hackathon 2026.
 
@@ -18,10 +18,11 @@ import gradio as gr
 from core import ARCH, BENCH, N_PARAMS, SAMPLES, make_degraded, restore
 from src.degradation import KERNELS
 
-CSS = ".small-note { font-size: 0.9em; opacity: 0.85; }  footer { visibility: hidden; }"
-
-with gr.Blocks(title="Degraded Image Restoration — KLA / i4C 2026",
-               theme=gr.themes.Soft(), css=CSS) as demo:
+# Gradio 6 moved theme and css from the Blocks constructor to launch(); passing them
+# here is only a warning today but errors on some versions. Everything below sticks to
+# the arguments that have been stable across Gradio 4, 5 and 6, because this app can
+# only be exercised once deployed — each incompatibility costs a full rebuild.
+with gr.Blocks(title="Degraded Image Restoration — KLA / i4C 2026") as demo:
     gr.Markdown(
         "# Restoring degraded semiconductor imagery\n"
         "**KLA problem statement · i4C / SEMICON India Hackathon 2026**\n\n"
@@ -36,8 +37,9 @@ with gr.Blocks(title="Degraded Image Restoration — KLA / i4C 2026",
             with gr.Column(scale=1):
                 sample = gr.Dropdown(list(SAMPLES), value=next(iter(SAMPLES), None),
                                      label="Sample image (all held out from training)")
-                upload = gr.Image(label="…or upload your own", type="numpy",
-                                  image_mode="L", height=130)
+                # No image_mode: core.read_gt already converts colour to greyscale, so
+                # constraining it here only risks a version-specific argument.
+                upload = gr.Image(label="…or upload your own", type="numpy")
                 gr.Markdown("### Damage controls")
                 L = gr.Slider(4, 100, value=17, step=0.5,
                               label="L — speckle strength (lower = noisier)")
@@ -45,21 +47,23 @@ with gr.Blocks(title="Degraded Image Restoration — KLA / i4C 2026",
                                   label="σ — additive noise")
                 kernel = gr.Dropdown(list(KERNELS), value="area",
                                      label="downsampling kernel")
-                seed = gr.Number(value=0, label="noise seed", precision=0)
-                btn = gr.Button("Restore", variant="primary", size="lg")
+                # A slider rather than gr.Number(precision=...): the precision argument
+                # is not stable across versions, and an integer slider is clearer anyway.
+                seed = gr.Slider(0, 20, value=0, step=1, label="noise seed")
+                btn = gr.Button("Restore", variant="primary")
                 gr.Markdown(
                     "The problem statement's own sample figures were generated at "
                     "**L = 16.86, σ = 0.0086** and **L = 18.13, σ = 0.0011**. Those "
                     "numbers were recovered from the figure captions inside the slide "
                     "deck, and are the only quantitative evidence about the damage "
-                    "that exists.", elem_classes="small-note")
+                    "that exists.")
             with gr.Column(scale=2):
                 with gr.Row():
-                    im_gt = gr.Image(label="Ground truth", height=252)
-                    im_lr = gr.Image(label="Degraded — model input", height=252)
+                    im_gt = gr.Image(label="Ground truth")
+                    im_lr = gr.Image(label="Degraded — model input")
                 with gr.Row():
-                    im_bic = gr.Image(label="Bicubic upscale", height=252)
-                    im_out = gr.Image(label="Model output", height=252)
+                    im_bic = gr.Image(label="Bicubic upscale")
+                    im_out = gr.Image(label="Model output")
                 metrics = gr.Markdown()
                 info = gr.Markdown()
 
@@ -85,8 +89,7 @@ with gr.Blocks(title="Degraded Image Restoration — KLA / i4C 2026",
             "Every cell below is a different noise level. The white box is what the "
             "model actually trained on; everything outside it is unseen."
         )
-        gr.Image("assets/robustness.png", label="SSIM across noise levels",
-                 height=430, show_download_button=False)
+        gr.Image("assets/robustness.png", label="SSIM across noise levels")
         gr.Markdown(
             "No cliff — quality falls away smoothly, and *improves* when the noise is "
             "milder than expected. That is deliberate: training sampled noise across "
