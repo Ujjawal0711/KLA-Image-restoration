@@ -65,6 +65,16 @@ def samples_dir() -> pathlib.Path:
 SAMPLES_DIR = samples_dir()
 
 
+def default_weights() -> pathlib.Path:
+    """Beside the script in a deployed copy, under checkpoints/ in the repo. Relying on
+    the caller to always pass --weights makes the script fragile: it would crash for
+    anyone who just runs `python app.py`."""
+    for cand in (ROOT / "model.pt", ROOT / "checkpoints" / "model.pt"):
+        if cand.exists():
+            return cand
+    return ROOT / "checkpoints" / "model.pt"
+
+
 def load_samples():
     idx = SAMPLES_DIR / "index.txt"
     if not idx.exists():
@@ -321,8 +331,7 @@ deg();
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--weights", type=pathlib.Path,
-                    default=ROOT / "checkpoints" / "model.pt")
+    ap.add_argument("--weights", type=pathlib.Path, default=default_weights())
     ap.add_argument("--port", type=int, default=7860)
     ap.add_argument("--host", default="127.0.0.1",
                     help="0.0.0.0 inside a container, so the platform can reach it")
