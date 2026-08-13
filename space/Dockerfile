@@ -12,7 +12,14 @@ ENV PATH=/home/user/.local/bin:$PATH \
 
 WORKDIR /app
 COPY --chown=user requirements.txt .
-RUN pip install --no-cache-dir --user -r requirements.txt
+
+# PIP_INDEX_URL is overridable only so the image can be built from a mirror on networks
+# that block files.pythonhosted.org. Hugging Face builds with the default and needs no
+# argument.
+ARG PIP_INDEX_URL=https://pypi.org/simple
+RUN pip install --no-cache-dir --user --index-url "$PIP_INDEX_URL" \
+        --extra-index-url https://download.pytorch.org/whl/cpu \
+        -r requirements.txt
 
 COPY --chown=user . .
 
