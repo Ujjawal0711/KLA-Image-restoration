@@ -39,11 +39,9 @@ Measured on 300 held-out images against the strongest non-learned baseline:
 
 | | baseline | model | gain |
 |---|---|---|---|
-| pSNR | 21.517 | **25.395** | **+3.878 dB** |
-| SSIM | 0.5110 | **0.6994** | **+0.1884 (37%)** |
-| LPIPS | 0.4341 | **0.1711** | **−0.2630** |
-
-Against plain bicubic: **+5.8 dB, +48% SSIM**.
+| pSNR | 21.517 | **25.448** | **+3.931 dB** |
+| SSIM | 0.5110 | **0.7012** | **+0.1902 (37%)** |
+| LPIPS | 0.4341 | **0.1672** | **−0.2669** |
 
 **No training data was released for this problem.** The entire training set is
 synthetic, built from a degradation model reverse-engineered out of parameters embedded

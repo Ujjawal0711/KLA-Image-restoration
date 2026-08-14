@@ -59,7 +59,7 @@ if _idx.exists():
 
 # Measured on 300 held-out images. LPIPS is shown from the benchmark rather than
 # computed live, because it needs a 230 MB network this Space does not otherwise need.
-BENCH = {"psnr": 25.395, "ssim": 0.6994, "lpips": 0.1711,
+BENCH = {"psnr": 25.448, "ssim": 0.7012, "lpips": 0.1672,
          "b_psnr": 21.517, "b_ssim": 0.5110, "b_lpips": 0.4341}
 
 

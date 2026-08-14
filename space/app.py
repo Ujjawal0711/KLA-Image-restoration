@@ -150,8 +150,6 @@ metrics.
 | SSIM | {BENCH['b_ssim']:.4f} | **{BENCH['ssim']:.4f}** | **+{BENCH['ssim'] - BENCH['b_ssim']:.4f}** ({(BENCH['ssim'] / BENCH['b_ssim'] - 1) * 100:.0f}%) |
 | LPIPS | {BENCH['b_lpips']:.4f} | **{BENCH['lpips']:.4f}** | **−{BENCH['b_lpips'] - BENCH['lpips']:.4f}** |
 
-Against plain bicubic: **+5.8 dB and +48% SSIM**, perceptual error cut to about a third.
-
 ### Five things that did *not* work
 Six improvement directions were tested and five measured worse or neutral. Those are
 worth as much as the one that worked:

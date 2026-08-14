@@ -14,16 +14,15 @@ Measured on 300 held-out images against the strongest non-learned baseline
 
 | | best classical baseline | **model** | gain |
 |---|---|---|---|
-| pSNR | 21.517 | **25.395** | **+3.878 dB** |
-| SSIM | 0.5110 | **0.6994** | **+0.1884 (37%)** |
-| LPIPS | 0.4341 | **0.1711** | **−0.2630** |
-
-Against plain bicubic upscaling: **+5.8 dB, +48% SSIM**, perceptual error cut to about
-a third.
+| pSNR | 21.517 | **25.448** | **+3.931 dB** |
+| SSIM | 0.5110 | **0.7012** | **+0.1902 (37%)** |
+| LPIPS | 0.4341 | **0.1672** | **−0.2669** |
 
 Full end-to-end dress rehearsal on 200 unseen images — 95 of them from corpora never
 used in training — run through the packaged submission under grading conditions:
-**+5.818 dB, +0.2117 SSIM, −0.2777 LPIPS**, 200 in / 200 out, all exactly 2×.
+**+5.818 dB, +0.2117 SSIM, −0.2777 LPIPS**, 200 in / 200 out, all exactly 2×. That
+rehearsal was run against the run-3 checkpoint (see NOTES.md §3.99), so it understates
+the shipped run-5 model rather than flattering it.
 
 ## Work split
 

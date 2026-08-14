@@ -359,7 +359,7 @@ motivated run 2's wider range.
 
 ---
 
-## §3.55 — Run 3 (SHIPPED, 2026-08-04)
+## §3.55 — Run 3 (2026-08-04; shipped until run 5 superseded it — see §3.60)
 
 Four changes stacked on run 2, each targeting something measured rather than guessed:
 
@@ -398,19 +398,22 @@ overlapped I/O, batching by resolution, autotuning disabled), not the seconds.
 | | pSNR | SSIM | LPIPS |
 |---|---|---|---|
 | run 2 (19.6M) | 25.283 | 0.6958 | 0.1805 |
-| **run 3 (27.0M) — SHIPPED** | **25.395** | **0.6994** | **0.1711** |
+| **run 3 (27.0M)** | **25.395** | **0.6994** | **0.1711** |
 | delta | +0.112 | +0.0036 | −0.0094 |
 
 Inference time identical (14.9 s vs 14.9 s on the same 60 images). Same pattern as
 run 1 → run 2: modest, consistent, free.
 
-### Final numbers (300 samples, current corpus)
+### Run-3 numbers (300 samples, corpus as of 2026-08-04)
 
 | | pSNR | SSIM | LPIPS |
 |---|---|---|---|
 | best baseline per metric | 21.517 | 0.5110 | 0.4341 |
-| **shipped model** | **25.395** | **0.6994** | **0.1711** |
+| **run 3** | **25.395** | **0.6994** | **0.1711** |
 | **gain** | **+3.878** | **+0.1884 (+36.9%)** | **−0.2630** |
+
+> Superseded on 2026-08-05 by run 5 (34.4M): **25.448 / 0.7012 / 0.1672**. See §3.60.
+> `checkpoints/model.pt` and `space/model.pt` both carry run 5.
 
 ### Side effects worth recording
 

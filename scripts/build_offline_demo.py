@@ -193,12 +193,11 @@ NAFNet 34.4M parameters</div>
   <b>Results</b> — measured on 300 held-out images against the strongest non-learned baseline
   <table>
     <tr><th>metric</th><th>baseline</th><th>model</th><th>gain</th></tr>
-    <tr><td>pSNR (dB)</td><td>21.517</td><td>25.395</td><td class="win">+3.878</td></tr>
-    <tr><td>SSIM</td><td>0.5110</td><td>0.6994</td><td class="win">+0.1884 (37%)</td></tr>
-    <tr><td>LPIPS</td><td>0.4341</td><td>0.1711</td><td class="win">−0.2630</td></tr>
+    <tr><td>pSNR (dB)</td><td>21.517</td><td>25.448</td><td class="win">+3.931</td></tr>
+    <tr><td>SSIM</td><td>0.5110</td><td>0.7012</td><td class="win">+0.1902 (37%)</td></tr>
+    <tr><td>LPIPS</td><td>0.4341</td><td>0.1672</td><td class="win">−0.2669</td></tr>
   </table>
-  <div class="note">Against plain bicubic: <b>+5.8 dB, +48% SSIM</b>, perceptual error
-  cut to about a third. No training data was released for this problem — the entire
+  <div class="note">No training data was released for this problem — the entire
   training set is synthetic, generated from a degradation model reverse-engineered from
   parameters embedded in the problem statement's own sample figures.</div>
 </div>

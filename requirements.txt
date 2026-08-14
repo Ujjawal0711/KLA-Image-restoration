@@ -1,3 +1,13 @@
+# Full `pip freeze` of the development environment. evaluate.py itself needs only
+# opencv-python, numpy and torch (verified by scripts/check_submission.py).
+#
+# torch/torchvision were built against CUDA 13.0. Those wheels live on PyTorch's own
+# index, not PyPI, so the line below is required: without it `pip install -r
+# requirements.txt` fails, because PyPI publishes 2.13.0 but never 2.13.0+cu130.
+# The pins are written without the +cu130 local version so that pip takes the CUDA
+# wheel where it is available and falls back to the PyPI build where it is not.
+--extra-index-url https://download.pytorch.org/whl/cu130
+
 certifi==2026.7.22
 charset-normalizer==3.4.9
 colorama==0.4.6
@@ -34,8 +44,8 @@ setuptools==78.1.0
 six==1.17.0
 sympy==1.14.0
 tifffile==2026.7.31
-torch==2.13.0+cu130
-torchvision==0.28.0+cu130
+torch==2.13.0
+torchvision==0.28.0
 tqdm==4.70.0
 typing_extensions==4.15.0
 urllib3==2.7.0
