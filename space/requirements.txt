@@ -1,5 +1,13 @@
-﻿gradio
-spaces
+# CPU-only Space. ZeroGPU needs a PRO subscription, so `spaces` is deliberately NOT
+# installed here: core.py wraps `import spaces` in try/except and degrades the
+# @spaces.GPU decorator to a no-op when the package is absent, which is exactly the
+# behaviour wanted on CPU hardware.
+#
+# The CPU torch wheel is ~200 MB against ~2.5 GB for the default CUDA build, which
+# matters on free hardware where build time and disk are both limited.
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+gradio
 torch
 numpy
 opencv-python-headless

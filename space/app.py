@@ -6,9 +6,9 @@ UI wiring only — all logic lives in core.py so it can be tested without Gradio
 
 The interaction is deliberately split in two. Corrupting an image is pure NumPy, so it
 updates the instant a slider moves: you watch speckle scale with brightness and see
-bright regions spill past white. Restoring it runs a 34M-parameter network, about 0.7 s
-on the free CPU this Space runs on. That contrast is the point — the damage is trivial
-to apply and hard to undo.
+bright regions spill past white. Restoring it runs a 34M-parameter network on the free
+CPU this Space runs on, a few seconds depending on input size. That contrast is the
+point — the damage is trivial to apply and hard to undo.
 """
 
 from __future__ import annotations
@@ -58,55 +58,20 @@ with gr.Blocks(title="Degraded Image Restoration — KLA / i4C 2026") as demo:
                     "deck, and are the only quantitative evidence about the damage "
                     "that exists.")
             with gr.Column(scale=2):
+                # Fixed height on all four panels. Without it Gradio sizes each panel to
+                # its own image, so the 512x512 ground truth towers over the 256x256
+                # input beside it and the 2x2 grid comes out ragged. `height` is a real
+                # prop in the deployed Gradio (6.24.0 reports it on every image
+                # component); it was stripped earlier along with genuinely broken
+                # arguments and did not need to be.
                 with gr.Row():
-                    im_gt = gr.Image(label="Ground truth")
-                    im_lr = gr.Image(label="Degraded — model input")
+                    im_gt = gr.Image(label="Ground truth", height=260)
+                    im_lr = gr.Image(label="Degraded — model input", height=260)
                 with gr.Row():
-                    im_bic = gr.Image(label="Bicubic upscale")
-                    im_out = gr.Image(label="Model output")
+                    im_bic = gr.Image(label="Bicubic upscale", height=260)
+                    im_out = gr.Image(label="Model output", height=260)
                 metrics = gr.Markdown()
                 info = gr.Markdown()
-
-    with gr.Tab("Why it spills past white"):
-        gr.Markdown(
-            "Ordinary image noise is **additive** — the same amount everywhere. This "
-            "noise **multiplies**, making it a percentage error: a pixel at 0.1 barely "
-            "moves while a pixel at 0.9 is thrown far. Multiply the brightest pixel by "
-            "1.24 and it lands at 1.24, past the top of the scale.\n\n"
-            "The organisers flag this as expected behaviour. It is also why nothing in "
-            "this pipeline clips the degraded input: clipping would train the model on "
-            "images the real test set will not contain.\n\n"
-            "*Drag the sliders on the first tab and watch this update.*"
-        )
-        hist = gr.Plot(label="Intensity histogram")
-
-    with gr.Tab("Does it hold up?"):
-        gr.Markdown(
-            "The damage model was **inferred, never confirmed** — it comes from two "
-            "figure captions. So the question that matters is not how good the model "
-            "is at the assumed noise level, but how fast it falls apart if that "
-            "assumption is wrong.\n\n"
-            "Every cell below is a different noise level. The white box is what the "
-            "model actually trained on; everything outside it is unseen."
-        )
-        gr.Image("assets/robustness.png", label="SSIM across noise levels")
-        gr.Markdown(
-            "No cliff — quality falls away smoothly, and *improves* when the noise is "
-            "milder than expected. That is deliberate: training sampled noise across "
-            "roughly double the observed range in both directions, trading a little "
-            "peak accuracy for not collapsing if the guess is off.\n\n"
-            "### Unfamiliar imagery\n"
-            "Scored cold on two microscopy types never seen in training:\n\n"
-            "| corpus | in training? | gain over bicubic (SSIM) |\n|---|---|---|\n"
-            "| textures | yes | +0.2283 |\n"
-            "| electron microscopy | yes | +0.1380 |\n"
-            "| **brightfield** | **no** | **+0.5245** |\n"
-            "| **fluorescence** | **no** | +0.1136 |\n\n"
-            "Mean SSIM on seen corpora 0.7678, on unseen 0.7619 — a 0.8% difference. "
-            "The largest margin over bicubic of any corpus is on imagery the model had "
-            "never seen, which is the evidence that it learned restoration rather than "
-            "memorising image families."
-        )
 
     with gr.Tab("How it was built"):
         gr.Markdown(f"""
@@ -130,6 +95,21 @@ existence, and it settled an ambiguity in the deck: one slide describes the seco
 noise as a loss of sharpness, but the recovered σ is far too small to be a blur kernel
 and is plainly an additive-noise standard deviation.
 
+### Why it spills past white
+Ordinary image noise is **additive** — the same amount everywhere. This noise
+**multiplies**, making it a percentage error: a pixel at 0.1 barely moves while a pixel
+at 0.9 is thrown far. Multiply the brightest pixel by 1.24 and it lands at 1.24, past
+the top of the scale.
+
+The organisers flag this as expected behaviour. It is also why nothing in this pipeline
+clips the degraded input: clipping would train the model on images the real test set
+will not contain.
+
+*Drag the sliders on the first tab and watch the histogram below update.*
+""")
+        hist = gr.Plot(label="Intensity histogram")
+
+        gr.Markdown(f"""
 ### The model
 **NAFNet**, {N_PARAMS / 1e6:.1f}M parameters (`base={ARCH.get('base')}`,
 `middle_blocks={ARCH.get('middle_blocks')}`). All computation happens at low resolution
@@ -143,12 +123,59 @@ combines pixel accuracy (a robust form, so speckle outliers do not dominate),
 structural similarity and perceptual similarity — two of those three are competition
 metrics.
 
+### What else was considered, and why it lost
+
+| approach | the case for it | why not |
+|---|---|---|
+| **Classical DSP** (bicubic + median / bilateral) | no training, instant, interpretable | hits a hard ceiling around 21.8 dB and cannot invent detail. Kept as the **baseline to beat** |
+| **GAN** (Real-ESRGAN style) | sharpest output, best perceptual scores | **hallucinates plausible texture.** Disqualifying here: on *inspection* imagery an invented speckle that looks like a defect is a false positive. Sharpness that isn't real is worse than mild blur |
+| **Diffusion** (SR3 / StableSR) | best-in-class perceptual quality | 10–1000× slower, and inference time is half the score — plus the same fidelity problem as GANs |
+| **Transformer** (SwinIR / Restormer) | very strong on restoration benchmarks | heavier, slower, more data-hungry. On a *fully synthetic* training set the extra capacity buys generalisation risk, not accuracy |
+| **Two-stage** (denoise, then upscale) | modular, each stage debuggable | two models and two error sources — and the measurement that supposedly favoured it did not survive a larger sample (below) |
+
+The through-line is that **fidelity beats sharpness for inspection**. Every rejected
+generative option wins on how the output *looks* and loses on whether it can be trusted.
+
 ### Results
 | | best classical baseline | **model** | gain |
 |---|---|---|---|
 | pSNR | {BENCH['b_psnr']:.3f} | **{BENCH['psnr']:.3f}** | **+{BENCH['psnr'] - BENCH['b_psnr']:.3f} dB** |
 | SSIM | {BENCH['b_ssim']:.4f} | **{BENCH['ssim']:.4f}** | **+{BENCH['ssim'] - BENCH['b_ssim']:.4f}** ({(BENCH['ssim'] / BENCH['b_ssim'] - 1) * 100:.0f}%) |
 | LPIPS | {BENCH['b_lpips']:.4f} | **{BENCH['lpips']:.4f}** | **−{BENCH['b_lpips'] - BENCH['lpips']:.4f}** |
+
+### Does it hold up?
+The damage model was **inferred, never confirmed** — it comes from two figure captions.
+So the question that matters is not how good the model is at the assumed noise level,
+but how fast it falls apart if that assumption is wrong. Every cell below is a different
+noise level. The white box is what the model actually trained on; everything outside it
+is unseen.
+""")
+        gr.Image("assets/robustness.png", label="SSIM across noise levels")
+
+        gr.Markdown("""
+No cliff — quality falls away smoothly, and *improves* when the noise is milder than
+expected. That is deliberate: training sampled noise across roughly double the observed
+range in both directions, trading a little peak accuracy for not collapsing if the guess
+is off.
+
+### Unfamiliar imagery
+Scored cold on two microscopy modalities never seen in training — 120 images per corpus,
+identical degradation throughout:
+
+| corpus | in training? | SSIM | gain over bicubic |
+|---|---|---|---|
+| textures | yes | 0.7125 | +0.2137 |
+| electron microscopy | yes | 0.6285 | +0.1345 |
+| materials micrographs | yes | 0.7292 | +0.1804 |
+| procedural wafer structures | yes | 0.9244 | +0.0985 |
+| **brightfield** | **no** | 0.6662 | **+0.5587** |
+| **fluorescence** | **no** | 0.8948 | +0.1195 |
+
+**Mean SSIM on seen corpora 0.7486, on unseen 0.7805 — the model scores *higher* on
+imagery it has never encountered.** Raw SSIM across corpora conflates generalisation
+with difficulty, so gain over bicubic on the same files is the fairer read: by that
+measure the largest margin of any corpus is on unseen brightfield, where bicubic manages
+0.1075 and the model reaches 0.6662. It learned restoration, not image families.
 
 ### Five things that did *not* work
 Six improvement directions were tested and five measured worse or neutral. Those are

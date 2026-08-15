@@ -670,6 +670,51 @@ so that row rests on a thin sample; brightfield carries the model's worst LPIPS 
 corpus (0.2631); and both are still microscopy, so the real test set could be further
 out than this.
 
+### Re-measured cold on 2026-08-16 (submission day)
+
+The local corpus had been deleted, so everything below was re-downloaded from source and
+re-scored from scratch against `checkpoints/model.pt`, which the run confirms is the
+shipped architecture (`nafnet base=64 middle_blocks=16`, 34.4M). 120 images per corpus,
+720 total — this time including `mat`, which the table above predates.
+
+| corpus | seen? | pSNR | SSIM | LPIPS | bicubic SSIM | **gain vs bicubic** |
+|---|---|---|---|---|---|---|
+| dtd | train | 25.197 | 0.7125 | 0.1699 | 0.4989 | +0.2137 |
+| em | train | 22.983 | 0.6285 | 0.0857 | 0.4940 | +0.1345 |
+| mat | train | 25.955 | 0.7292 | 0.1655 | 0.5488 | +0.1804 |
+| proc | train | 30.487 | 0.9244 | 0.0363 | 0.8259 | +0.0985 |
+| **brightfield** | **UNSEEN** | 32.779 | 0.6662 | 0.1065 | 0.1075 | **+0.5587** |
+| **fluorescence** | **UNSEEN** | 32.133 | 0.8948 | 0.0853 | 0.7752 | +0.1195 |
+
+**Mean SSIM: seen 0.7486, unseen 0.7805.** The unseen corpora now score *higher* than
+the trained ones, where the earlier run had them flat. The brightfield row moved most
+(LPIPS 0.2631 → 0.1065), and its margin over bicubic remains the largest of any corpus.
+The earlier table's provenance is not recorded precisely enough to attribute the shift
+with confidence, so it is left standing rather than overwritten.
+
+### Held-out set, re-measured at n=628
+
+`scripts/compare_models.py --n 628` — the entire validation split, 2.1× the 300 the
+published figures rest on. `val_frac` is 0.05 and was deliberately **not** raised:
+enlarging it would pull images the shipped model trained on into the test set.
+
+| | pSNR | SSIM | LPIPS |
+|---|---|---|---|
+| bicubic floor | 20.757 | 0.5461 | 0.4390 |
+| shipped model | 25.326 | 0.7227 | 0.1277 |
+
+**Not directly comparable to the published table, and deliberately not substituted for
+it.** Two differences: this run samples uniformly by file, so `dtd` is 45% of it against
+the published run's balanced draw; and the floor here is *plain* bicubic rather than the
+strongest tuned classical baseline. The mismatch is visible in the baseline itself —
+plain bicubic scores 0.5461 SSIM here against the published baseline's 0.5110, a weaker
+method scoring higher, which is only possible across different image mixes. Exactly the
+bias §3.595 documents.
+
+**Conclusion: the published 25.448 / 0.7012 / 0.1672 stand unchanged.** Both reruns
+corroborate or exceed them; neither replicates the published protocol closely enough to
+justify replacing it.
+
 ### Per-corpus spread is large
 
 `proc` scores 0.9337 against `em`'s 0.6282. The procedural images are largely dark
