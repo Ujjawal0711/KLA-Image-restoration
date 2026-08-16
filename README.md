@@ -105,8 +105,22 @@ Run it locally:
 python demo_app.py          # then open http://localhost:7860
 ```
 
-[`space/`](space/) is the same server packaged for Hugging Face as a Docker Space —
-`app.py` there is a copy of `demo_app.py`, so what is deployed is what was tested.
+**Live version:** <https://huggingface.co/spaces/Ujjawal0711/kla-image-restoration>
+
+[`space/`](space/) holds that deployment — a Gradio SDK Space, and a separate front end
+from `demo_app.py` (which is dependency-free stdlib `http.server`). All of its logic
+lives in [`space/core.py`](space/core.py), which imports no Gradio at all so
+[`space/test_core.py`](space/test_core.py) can exercise every path without it installed.
+
+### Images to try it on
+
+[`Gallery/`](Gallery/) has 18 ready-to-upload 512×512 images spanning all six corpora,
+with [suggested damage settings](Gallery/README.md) — including the exact parameters
+recovered from the problem statement's own figures (`L = 16.86, σ = 0.0086`).
+
+**None of them were trained on.** The four in-training corpora draw only from the
+deterministic validation split (`val_frac=0.05`, `seed=0`), the same split the published
+metrics use; brightfield and fluorescence were never in training at all.
 
 ## Reproducing from scratch
 
@@ -192,7 +206,8 @@ does not support it, and the original claim was overstated.
 evaluate.py                  the deliverable — inference pipeline
 NOTES.md                     every empirical finding and measurement
 Project-Report.pdf           32-page written report
-space/                       the demo, packaged as a Docker Space
+Gallery/                     18 held-out images to try the demo on
+space/                       the live demo, a Gradio Space
 src/
   degradation.py             forward degradation model
   dataset.py                 on-the-fly synthetic pair generation
